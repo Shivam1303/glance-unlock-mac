@@ -26,7 +26,9 @@ struct GlanceUnlockApp: App {
             GlanceMenuBarView()
                 .environmentObject(model)
         } label: {
-            Image(systemName: model.protectionSettings.isEnabled ? "faceid" : "face.dashed")
+            Image("MenuBarLogo")
+                .renderingMode(.original)
+                .opacity(model.protectionSettings.isEnabled ? 1 : 0.55)
                 .accessibilityLabel(model.protectionSettings.isEnabled ? "Glance protection active" : "Glance protection paused")
         }
         .menuBarExtraStyle(.menu)

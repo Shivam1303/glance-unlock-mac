@@ -94,14 +94,11 @@ struct AppMark: View {
 
     var body: some View {
         HStack(spacing: compact ? 8 : 11) {
-            ZStack {
-                RoundedRectangle(cornerRadius: compact ? 7 : 9, style: .continuous)
-                    .fill(Color.white)
-                Image(systemName: "faceid")
-                    .font(.system(size: compact ? 13 : 16, weight: .semibold))
-                    .foregroundStyle(Color.black)
-            }
-            .frame(width: compact ? 28 : 34, height: compact ? 28 : 34)
+            Image("GlanceLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: compact ? 28 : 34, height: compact ? 28 : 34)
+                .accessibilityHidden(true)
 
             Text("GLANCE")
                 .font(.system(size: compact ? 12 : 14, weight: .semibold, design: .monospaced))
