@@ -1,6 +1,84 @@
 # Publishing a Glance Unlock DMG
 
-This guide prepares a Developer ID-signed, notarized DMG for a GitHub Release. Run commands from the repository root. The current app version is `0.1`, so the examples use `GlanceUnlock-0.1.dmg` and tag `v0.1`.
+There are two release routes. Run commands from the repository root. The current app version is `0.1`, and the first release tag is `v0.1`.
+
+| Route | Apple membership | First launch |
+| --- | --- | --- |
+| Free preview with an ad-hoc signature | Not required | Users may need to approve the app in Privacy & Security |
+| Developer ID signing and notarization | Paid Apple Developer Program | Apple can verify the publisher and notarization ticket |
+
+Developer ID and notarization are benefits of the paid program; an ad-hoc signature requires no certificate. [Apple's membership comparison](https://developer.apple.com/support/compare-memberships/).
+
+## Free preview: build and publish
+
+### Build the DMG
+
+```bash
+bash scripts/build-dmg.sh
+```
+
+The script builds the Release configuration for arm64 with ad-hoc signing, preserves the sandbox and camera entitlements, verifies the app's code signature, and packages the app, an Applications shortcut, and installation instructions. It creates:
+
+- `dist/GlanceUnlock-0.1-arm64.dmg`
+- `dist/SHA256SUMS.txt`
+
+Build logs are in `dist/build.log`. Build outputs are ignored by Git. If a DMG with the same version exists, move it before rebuilding or increment the version in `GlanceUnlock/Info.plist` for a new release. The script reads the version from that file.
+
+An ad-hoc signature verifies code integrity but does not establish an Apple-verified publisher. This route has no notarization or stapling step. A Gatekeeper assessment rejection is expected for an unnotarized downloaded build; it is not the same as a failed code-signature integrity check.
+
+### Test the installed build
+
+1. Open the DMG and drag GlanceUnlock.app into Applications.
+2. Launch the installed app.
+3. If macOS blocks the app and you trust its source, open System Settings → Privacy & Security → Open Anyway, then confirm opening. This exception may be unavailable on managed Macs.
+4. Test camera access, five-sample enrolment, app selection, face-and-blink verification, and Touch ID or Password fallback.
+5. Close the main window and check that the menu-bar icon remains with no Dock icon. Test pause/resume and quitting.
+6. Check Launch at Login on this installed build. If it fails, document that limitation and launch the app manually after signing in.
+
+Reference: [Apple — opening apps safely](https://support.apple.com/102445).
+
+### Publish the preview
+
+1. Open [New release](https://github.com/Shivam1303/glance-unlock-mac/releases/new).
+2. Create tag `v0.1` targeting the tested source commit on `main`.
+3. Enter title **Glance Unlock 0.1 — Public Preview**.
+4. Attach the DMG and checksum file listed above.
+5. Paste the release notes below, mark the release as a pre-release, and save the draft.
+6. Review the assets and notes, then choose Publish release.
+7. Download the published DMG through a browser and repeat installation testing to check Gatekeeper's downloaded-app behavior.
+
+```markdown
+Glance Unlock 0.1 — initial public preview
+
+Requires macOS Tahoe 26.0 or later and an Apple silicon Mac (arm64).
+This release is ad-hoc signed and has not been notarized by Apple.
+
+Features:
+- Local face matching and blink verification for selected applications.
+- Touch ID or Password fallback through macOS.
+- Menu-bar controls with no Dock icon.
+- Face-profile storage in Keychain; no saved camera photos or video.
+
+Installation:
+1. Download GlanceUnlock-0.1-arm64.dmg and drag the app into Applications.
+2. Open Glance Unlock. If macOS blocks it, approve it only if you trust the
+   source: System Settings > Privacy & Security > Open Anyway.
+3. Allow camera access, enrol your face, and choose protected apps.
+
+Launch at Login is not validated for this preview. Open Glance manually
+at sign-in if it is unavailable.
+
+This is a privacy-layer prototype, not a replacement for the macOS lock
+screen, Apple Face ID, or FileVault. Quitting Glance disables protection.
+```
+
+Do not upload an ad-hoc preview as though it were Developer ID-signed or notarized. Commit source and documentation; attach the DMG as a release asset.
+
+Reference: [GitHub — managing releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+
+## Optional paid route: Developer ID and notarization
+
+The rest of this guide applies only if you later enroll and choose Developer ID signing. It uses `GlanceUnlock-0.1.dmg` as the output filename.
 
 ## 1. Set up signing
 

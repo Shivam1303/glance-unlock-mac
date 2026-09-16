@@ -33,8 +33,10 @@ Intel Macs have not been validated. Check the release notes for the architecture
 
 1. Open [Releases](https://github.com/Shivam1303/glance-unlock-mac/releases) and select a release containing a `.dmg` asset.
 2. Download and open the DMG, then drag **GlanceUnlock.app** into **Applications**.
-3. Launch Glance Unlock from Applications and allow camera access when prompted.
-4. After setup, use the face icon in the menu bar to reopen Glance.
+3. Launch Glance Unlock from Applications. For an ad-hoc-signed, unnotarized release, macOS may block the first launch. If you trust the release source, open **System Settings → Privacy & Security → Open Anyway**, then confirm opening. Managed Macs may prohibit this exception.
+4. Allow camera access when prompted. After setup, use the face icon in the menu bar to reopen Glance.
+
+Free preview builds are ad-hoc signed and are **not notarized by Apple**. See [Apple's instructions for opening unnotarized apps](https://support.apple.com/102445).
 
 If no DMG is listed, use the source-build instructions below. GitHub's automatically generated source archives are not installable app builds.
 
@@ -69,7 +71,7 @@ cd glance-unlock-mac
 open GlanceUnlock/GlanceUnlock.xcodeproj
 ```
 
-In Xcode, select the **GlanceUnlock** scheme and **My Mac**, then choose **Product → Run**. Debug builds use local ad-hoc signing. A public release needs Developer ID signing and notarization; see the [release guide](RELEASING.md).
+In Xcode, select the **GlanceUnlock** scheme and **My Mac**, then choose **Product → Run**. Debug builds use local ad-hoc signing. You can package a free preview DMG with ad-hoc signing. Developer ID signing and Apple notarization require paid membership; both routes are covered in the [release guide](RELEASING.md).
 
 To run the unit tests, choose **Product → Test**, or run:
 
@@ -82,10 +84,22 @@ xcodebuild test \
 
 The tests cover matching policy, blink detection, and face-profile storage behavior. Real camera, lighting, spoofing, and application-protection scenarios also require manual testing.
 
+## Create a free preview DMG
+
+No paid developer account or signing certificate is needed:
+
+```bash
+bash scripts/build-dmg.sh
+```
+
+The script builds an optimized arm64 Release app with an ad-hoc signature, verifies its signature, and creates `dist/GlanceUnlock-0.1-arm64.dmg` plus `dist/SHA256SUMS.txt`. Upload these files as GitHub Release assets after testing installation. An ad-hoc signature does not identify the publisher to Apple or provide notarization.
+
+Launch at Login must be checked on the installed preview build. If it is unavailable, open Glance manually after signing in.
+
 ## Documentation
 
 - [User guide](USER_GUIDE.md) — enrolment, protected apps, permissions, and troubleshooting.
-- [Release guide](RELEASING.md) — sign, package, notarize, and publish a DMG.
+- [Release guide](RELEASING.md) — free preview packaging, optional notarization, and GitHub publishing.
 - [Project checklist](PROJECT_CHECKLIST.md) — completed work and remaining validation.
 - [Build specification](GLANCE_UNLOCK_BUILD_SPEC.md) — original requirements and prototype boundaries.
 
