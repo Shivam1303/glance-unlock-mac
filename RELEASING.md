@@ -1,6 +1,6 @@
 # Publishing a Glance Unlock DMG
 
-There are two release routes. Run commands from the repository root. The current app version is `0.1`, and the first release tag is `v0.1`.
+There are two release routes. Run commands from the repository root. The examples below use the initial preview version `0.1` and tag `v0.1`. For later releases, use the version in `GlanceUnlock/Info.plist` in filenames, tags, titles, and release notes.
 
 | Route | Apple membership | First launch |
 | --- | --- | --- |

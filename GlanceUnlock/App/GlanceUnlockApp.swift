@@ -17,6 +17,7 @@ struct GlanceUnlockApp: App {
             ContentView()
                 .environmentObject(model)
                 .frame(minWidth: 860, idealWidth: 1080, minHeight: 660, idealHeight: 720)
+                .background(MainWindowRegistration(presenter: model.mainWindowPresenter))
         }
         .windowResizability(.contentMinSize)
         .defaultLaunchBehavior(model.hasProfile ? .suppressed : .presented)
