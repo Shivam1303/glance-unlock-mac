@@ -41,7 +41,8 @@ struct GlanceMenuBarView: View {
     }
 
     private func showMainWindow() {
-        openWindow(id: "main")
-        NSApplication.shared.activate()
+        model.mainWindowPresenter.show {
+            openWindow(id: "main")
+        }
     }
 }

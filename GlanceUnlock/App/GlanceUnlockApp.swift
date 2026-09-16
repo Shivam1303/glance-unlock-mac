@@ -17,6 +17,7 @@ struct GlanceUnlockApp: App {
             ContentView()
                 .environmentObject(model)
                 .frame(minWidth: 860, idealWidth: 1080, minHeight: 660, idealHeight: 720)
+                .background(MainWindowRegistration(presenter: model.mainWindowPresenter))
         }
         .windowResizability(.contentMinSize)
         .defaultLaunchBehavior(model.hasProfile ? .suppressed : .presented)
@@ -25,7 +26,9 @@ struct GlanceUnlockApp: App {
             GlanceMenuBarView()
                 .environmentObject(model)
         } label: {
-            Image(systemName: model.protectionSettings.isEnabled ? "faceid" : "face.dashed")
+            Image("MenuBarLogo")
+                .renderingMode(.original)
+                .opacity(model.protectionSettings.isEnabled ? 1 : 0.55)
                 .accessibilityLabel(model.protectionSettings.isEnabled ? "Glance protection active" : "Glance protection paused")
         }
         .menuBarExtraStyle(.menu)

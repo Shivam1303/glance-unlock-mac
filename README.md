@@ -92,7 +92,7 @@ No paid developer account or signing certificate is needed:
 bash scripts/build-dmg.sh
 ```
 
-The script builds an optimized arm64 Release app with an ad-hoc signature, verifies its signature, and creates `dist/GlanceUnlock-0.1-arm64.dmg` plus `dist/SHA256SUMS.txt`. Upload these files as GitHub Release assets after testing installation. An ad-hoc signature does not identify the publisher to Apple or provide notarization.
+The script builds an optimized arm64 Release app with an ad-hoc signature, verifies its signature, and creates `dist/GlanceUnlock-<version>-arm64.dmg` plus `dist/SHA256SUMS.txt`. Upload these files as GitHub Release assets after testing installation. An ad-hoc signature does not identify the publisher to Apple or provide notarization.
 
 Launch at Login must be checked on the installed preview build. If it is unavailable, open Glance manually after signing in.
 

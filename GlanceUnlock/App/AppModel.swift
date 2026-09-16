@@ -3,6 +3,7 @@ import SwiftUI
 
 @MainActor
 final class AppModel: ObservableObject {
+    let mainWindowPresenter = MainWindowPresenter()
     let camera = CameraService()
     let profileStore: FaceProfileStore
     let featurePrintService = FeaturePrintService()

@@ -255,9 +255,10 @@ private struct SecurityVisual: View {
                 }
 
             VStack(spacing: compact ? 5 : 12) {
-                Image(systemName: hasProfile ? "faceid" : "viewfinder")
-                    .font(.system(size: compact ? 38 : 72, weight: .ultraLight))
-                    .foregroundStyle(DesignSystem.primaryText)
+                Image("GlanceLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: compact ? 48 : 84, height: compact ? 48 : 84)
                 Text(hasProfile ? "IDENTITY / LOCAL" : "AWAITING / PROFILE")
                     .font(.system(size: compact ? 8 : 10, weight: .semibold, design: .monospaced))
                     .tracking(1.1)
