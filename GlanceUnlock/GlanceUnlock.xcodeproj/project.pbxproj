@@ -20,7 +20,6 @@
 		402D56E93051E71F0065F9B1 /* GlanceUnlock.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = GlanceUnlock.xcodeproj; sourceTree = "<group>"; };
 		402D57273051EB560065F9B1 /* GlanceUnlock.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = GlanceUnlock.xcodeproj; sourceTree = "<group>"; };
 		402D57693051F37C0065F9B1 /* GlanceUnlock.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = GlanceUnlock.xcodeproj; sourceTree = "<group>"; };
-		40FAB51D305B400B00982B0B /* GlanceUnlock.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = GlanceUnlock.xcodeproj; sourceTree = "<group>"; };
 		A00000000000000000000001 /* GlanceUnlock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GlanceUnlock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000002 /* GlanceUnlockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = GlanceUnlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -69,11 +68,6 @@
 			sourceTree = "<group>";
 		};
 		402D576B3051F37C0065F9B1 /* Products */ = {
-			isa = PBXGroup;
-			name = Products;
-			sourceTree = "<group>";
-		};
-		40FAB51F305B400B00982B0B /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
@@ -161,10 +155,6 @@
 			productRefGroup = A00000000000000000000013 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
-				{
-					ProductGroup = 40FAB51F305B400B00982B0B /* Products */;
-					ProjectRef = 40FAB51D305B400B00982B0B /* GlanceUnlock.xcodeproj */;
-				},
 				{
 					ProductGroup = 402D576B3051F37C0065F9B1 /* Products */;
 					ProjectRef = 402D57693051F37C0065F9B1 /* GlanceUnlock.xcodeproj */;
