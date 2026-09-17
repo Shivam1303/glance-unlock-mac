@@ -3,6 +3,7 @@ import SwiftUI
 
 @MainActor
 final class AppModel: ObservableObject {
+    let actionAuthorization = ProtectionActionAuthorization.shared
     let mainWindowPresenter = MainWindowPresenter()
     let camera = CameraService()
     let profileStore: FaceProfileStore
@@ -55,6 +56,35 @@ final class AppModel: ObservableObject {
 
     func protectionConfigurationDidChange() {
         protectionController?.configurationDidChange()
+    }
+
+    func setProtectionEnabled(_ enabled: Bool) {
+        guard enabled != protectionSettings.isEnabled else { return }
+        guard !actionAuthorization.isAuthenticating else { return }
+        if enabled {
+            protectionSettings.isEnabled = true
+            protectionConfigurationDidChange()
+            return
+        }
+        actionAuthorization.request(reason: "pause app protection") { [weak self] authorized in
+            guard authorized, let self else { return }
+            protectionSettings.isEnabled = false
+            protectionConfigurationDidChange()
+        }
+    }
+
+    func setAppProtected(_ protected: Bool, bundleIdentifier: String) {
+        guard !actionAuthorization.isAuthenticating else { return }
+        if protected {
+            protectionSettings.setProtected(true, bundleIdentifier: bundleIdentifier)
+            protectionConfigurationDidChange()
+            return
+        }
+        actionAuthorization.request(reason: "remove protection for this app") { [weak self] authorized in
+            guard authorized, let self else { return }
+            protectionSettings.setProtected(false, bundleIdentifier: bundleIdentifier)
+            protectionConfigurationDidChange()
+        }
     }
 
     func refreshProfile() {

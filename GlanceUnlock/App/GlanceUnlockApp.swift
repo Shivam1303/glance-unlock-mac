@@ -2,6 +2,16 @@ import AppKit
 import SwiftUI
 
 final class GlanceAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // A synchronous denial must return terminateCancel rather than replying
+        // before AppKit has registered a pending termination request.
+        guard !ProtectionActionAuthorization.shared.isAuthenticating else { return .terminateCancel }
+        ProtectionActionAuthorization.shared.request(reason: "quit Glance and stop app protection") { authorized in
+            sender.reply(toApplicationShouldTerminate: authorized)
+        }
+        return .terminateLater
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
