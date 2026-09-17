@@ -50,12 +50,14 @@ been notarized by Apple.
 4. Allow camera access, enrol your face, and choose protected apps.
 
 Glance stays in the menu bar without a Dock icon. Closing its main window
-keeps monitoring active; quitting Glance stops it. Launch at Login needs
+keeps monitoring active. Pausing protection, removing a protected app, and
+quitting Glance require your Mac account password in a macOS prompt.
+Cancelling keeps protection unchanged. Launch at Login needs
 manual validation on this unnotarized build; if unavailable, open Glance
 manually after signing in.
 
 This is a privacy-layer prototype, not a macOS lock-screen replacement.
-Quitting the app bypasses its protection.
+Force-quitting or killing the app bypasses its protection.
 
 Source and documentation:
 https://github.com/Shivam1303/glance-unlock-mac

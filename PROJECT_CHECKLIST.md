@@ -53,3 +53,11 @@ This is the living implementation and validation checklist. Update it when featu
 - [ ] Multiple local face profiles, if a concrete user need emerges.
 - [ ] Signed/notarized distribution.
 - [ ] Any real macOS login-window, PAM, FileVault, authorization, privileged-helper, or system-lock integration.
+# Password-protected controls
+
+- [ ] With protection active, choose **Pause Protection** in the menu bar: verify a Mac account password prompt appears and cancelling keeps protection active.
+- [ ] Enter an incorrect password: verify protection remains active. Enter the correct password: verify protection pauses. Resume without a prompt.
+- [ ] Repeat pause/cancel and pause/success using the protection settings switch; verify removing an app's protection also requires the password.
+- [ ] Choose **Quit Glance** and cancel: verify monitoring continues. Repeat with Command-Q. Enter the correct password: verify Glance quits.
+- [ ] On a Mac with Touch ID or Apple Watch configured, verify these controls still require the account password.
+- [ ] After successful authentication, request another protected action: verify a fresh password prompt appears.

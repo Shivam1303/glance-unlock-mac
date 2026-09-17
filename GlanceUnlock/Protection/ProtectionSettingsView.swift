@@ -8,6 +8,8 @@ struct ProtectionSettingsView: View {
     let hasFaceProfile: Bool
     let onRequestEnrollment: @MainActor () -> Void
     let onConfigurationChanged: @MainActor () -> Void
+    let onSetProtectionEnabled: @MainActor (Bool) -> Void
+    let onSetAppProtected: @MainActor (Bool, String) -> Void
 
     @State private var searchText = ""
 
@@ -297,8 +299,7 @@ struct ProtectionSettingsView: View {
         Binding(
             get: { settings.isEnabled },
             set: { enabled in
-                settings.isEnabled = enabled
-                onConfigurationChanged()
+                onSetProtectionEnabled(enabled)
             }
         )
     }
@@ -346,8 +347,7 @@ struct ProtectionSettingsView: View {
             Toggle("Protect \(application.displayName)", isOn: Binding(
                 get: { settings.isProtected(application.bundleIdentifier) },
                 set: { protected in
-                    settings.setProtected(protected, bundleIdentifier: application.bundleIdentifier)
-                    onConfigurationChanged()
+                    onSetAppProtected(protected, application.bundleIdentifier)
                 }
             ))
             .labelsHidden()

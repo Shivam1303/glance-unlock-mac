@@ -76,7 +76,9 @@ struct ContentView: View {
                     enrollAfterSettingsDismiss = true
                     model.isProtectionSettingsPresented = false
                 },
-                onConfigurationChanged: model.protectionConfigurationDidChange
+                onConfigurationChanged: model.protectionConfigurationDidChange,
+                onSetProtectionEnabled: model.setProtectionEnabled,
+                onSetAppProtected: { model.setAppProtected($0, bundleIdentifier: $1) }
             )
         }
         .alert("Glance Unlock", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {

@@ -4,7 +4,7 @@
 
 Glance Unlock is a native SwiftUI macOS app that hides selected applications and asks for face-and-blink verification before restoring them. You can also authenticate through the standard macOS **Use Touch ID or Password** dialog.
 
-> Glance is a privacy-layer prototype. It does not replace the macOS lock screen, Apple Face ID, or FileVault. Protection works only while Glance is running and can be bypassed by quitting it.
+> Glance is a privacy-layer prototype. It does not replace the macOS lock screen, Apple Face ID, or FileVault. Protection works only while Glance is running; force-quitting or killing its process can still bypass it.
 
 [Releases](https://github.com/Shivam1303/glance-unlock-mac/releases) · [User guide](USER_GUIDE.md) · [Release guide](RELEASING.md) · [Report an issue](https://github.com/Shivam1303/glance-unlock-mac/issues)
 
@@ -14,7 +14,7 @@ Glance Unlock is a native SwiftUI macOS app that hides selected applications and
 - **Configurable relock timing** — relock immediately, after 30 seconds, or only when the protected app quits.
 - **Face matching and blink checks** — enrol five face samples, then verify a consistent match followed by a natural blink.
 - **macOS authentication fallback** — use Touch ID or Password through a system-owned dialog.
-- **Menu-bar controls** — open Glance, manage apps, pause or resume protection, and quit. No Dock icon.
+- **Menu-bar controls** — open Glance, manage apps, pause or resume protection, and quit. Pausing, quitting, and removing an app's protection require your Mac account password through a macOS prompt. No Dock icon.
 - **Optional Launch at Login** — keep Glance available after signing in, subject to macOS approval.
 - **Local face-profile storage** — derived face representations live in Keychain; camera photos and video are never saved.
 - **Face Check demo** — try verification in a simulated lock view with an exit control.
@@ -49,7 +49,7 @@ If no DMG is listed, use the source-build instructions below. GitHub's automatic
 4. Optionally enable **Launch at Login**. Approve Glance in **System Settings → General → Login Items** if requested.
 5. Switch to a protected app, look toward the camera, and blink when prompted. You can choose **Use Touch ID or Password** instead.
 
-Closing Glance's main window keeps protection running. **Quit Glance** stops monitoring. Choose whether a verified app relocks immediately after switching away, after 30 seconds, or when that app quits.
+Closing Glance's main window keeps protection running. **Quit Glance** stops monitoring after Mac account password authentication, including when using Command-Q. Pausing protection from the menu bar or settings and removing a protected app also require the password. Cancelling the prompt leaves protection unchanged. Resuming protection requires no password. Choose whether a verified app relocks immediately after switching away, after 30 seconds, or when that app quits.
 
 See the [user guide](USER_GUIDE.md) for camera-permission recovery, calibration, and resetting your face profile.
 
@@ -58,7 +58,7 @@ See the [user guide](USER_GUIDE.md) for camera-permission recovery, calibration,
 - Camera frames are processed in memory and discarded. They are never saved as photos or video.
 - Face matching runs locally with Apple frameworks. The app has no network client or analytics.
 - Only derived Vision feature-print representations are stored in Keychain. The app uses the device-only Data Protection Keychain where signing entitlements permit it, with an encrypted login-Keychain fallback for local ad-hoc builds.
-- Glance never reads, requests, stores, or types your Mac password. The authentication fallback is handled entirely by macOS.
+- Glance never reads, stores, or types your Mac password. Password entry for protection controls and authentication fallback is handled entirely by macOS.
 - The app does not modify the login window, PAM, Authorization database, FileVault, SIP, or other system authentication components.
 - You can remove the stored profile using **Reset face profile**.
 

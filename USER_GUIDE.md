@@ -12,7 +12,7 @@ Use it only on your own Mac in a private setting. Glance never reads or stores y
 2. Select the **GlanceUnlock** scheme and **My Mac** as the run destination.
 3. Choose Run.
 
-After initial setup, Glance can remain in the menu bar without keeping its main window open. Use the menu-bar face icon to open Glance, manage protected apps, pause or resume protection, or quit.
+After initial setup, Glance can remain in the menu bar without keeping its main window open. Use the menu-bar face icon to open Glance, manage protected apps, pause or resume protection, or quit. Pausing protection, removing a protected app, and quitting (including Command-Q) require your Mac account password in a macOS prompt. Cancelling keeps protection unchanged. Resuming requires no authentication.
 
 ## Allow camera access
 
@@ -47,7 +47,7 @@ You can leave an unlock screen with **Back to other apps**, Escape, or Command-T
 
 At every gate, **Use Touch ID or Password** invokes the standard macOS device-owner authentication dialog. Depending on the Mac and its configuration, macOS can use Touch ID, Apple Watch, or the account password. Cancelling the macOS dialog returns to the still-locked gate and resumes face verification.
 
-This feature works only while Glance is running. It is a privacy convenience, not a tamper-resistant lock: quitting Glance or otherwise bypassing cooperative app hiding disables the protection.
+This feature works only while Glance is running. It is a privacy convenience, not a tamper-resistant lock: force-quitting or killing Glance, or otherwise bypassing cooperative app hiding, disables the protection. The password requirement guards normal app controls; it cannot prevent operating-system process termination.
 
 ## Try the face-check demo
 

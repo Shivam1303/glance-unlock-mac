@@ -20,8 +20,7 @@ struct GlanceMenuBarView: View {
         Divider()
 
         Button(model.protectionSettings.isEnabled ? "Pause Protection" : "Resume Protection") {
-            model.protectionSettings.isEnabled.toggle()
-            model.protectionConfigurationDidChange()
+            model.setProtectionEnabled(!model.protectionSettings.isEnabled)
         }
         .disabled(model.protectionSettings.protectedAppCount == 0)
 
