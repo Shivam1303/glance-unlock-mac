@@ -27,9 +27,11 @@ final class LaunchAtLoginController: ObservableObject {
             isEnabled = false
             requiresApproval = false
         case .notFound:
+            // Service Management reports `.notFound` until it has seen this
+            // main-app service at least once. It is a normal initial state,
+            // and `register()` is what creates the registration.
             isEnabled = false
             requiresApproval = false
-            errorMessage = "Install the signed Glance app in Applications before enabling Launch at Login."
         @unknown default:
             isEnabled = false
             requiresApproval = false
@@ -42,7 +44,9 @@ final class LaunchAtLoginController: ObservableObject {
 
         do {
             if enabled {
-                guard service.status == .notRegistered else {
+                // A first-time main-app registration commonly begins at
+                // `.notFound`, rather than `.notRegistered`.
+                guard service.status == .notRegistered || service.status == .notFound else {
                     refresh()
                     return
                 }
