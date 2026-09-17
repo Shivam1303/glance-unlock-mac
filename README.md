@@ -11,6 +11,7 @@ Glance Unlock is a native SwiftUI macOS app that hides selected applications and
 ## Features
 
 - **Protect selected apps** — choose which applications should ask for verification when you switch to them.
+- **Configurable relock timing** — relock immediately, after 30 seconds, or only when the protected app quits.
 - **Face matching and blink checks** — enrol five face samples, then verify a consistent match followed by a natural blink.
 - **macOS authentication fallback** — use Touch ID or Password through a system-owned dialog.
 - **Menu-bar controls** — open Glance, manage apps, pause or resume protection, and quit. No Dock icon.
@@ -48,7 +49,7 @@ If no DMG is listed, use the source-build instructions below. GitHub's automatic
 4. Optionally enable **Launch at Login**. Approve Glance in **System Settings → General → Login Items** if requested.
 5. Switch to a protected app, look toward the camera, and blink when prompted. You can choose **Use Touch ID or Password** instead.
 
-Closing Glance's main window keeps protection running. **Quit Glance** stops monitoring. Switching away from a verified app relocks it.
+Closing Glance's main window keeps protection running. **Quit Glance** stops monitoring. Choose whether a verified app relocks immediately after switching away, after 30 seconds, or when that app quits.
 
 See the [user guide](USER_GUIDE.md) for camera-permission recovery, calibration, and resetting your face profile.
 

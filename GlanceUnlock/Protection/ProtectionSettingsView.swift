@@ -96,6 +96,30 @@ struct ProtectionSettingsView: View {
             Divider().overlay(DesignSystem.stroke)
                 .padding(.vertical, 22)
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Relock timing")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(DesignSystem.primaryText)
+
+                Picker("Relock timing", selection: relockTimingBinding) {
+                    ForEach(AppRelockTiming.allCases) { timing in
+                        Text(timing.title).tag(timing)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .accessibilityLabel("Relock timing")
+
+                Text(settings.relockTiming.detail)
+                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .foregroundStyle(DesignSystem.tertiaryText)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Divider().overlay(DesignSystem.stroke)
+                .padding(.vertical, 22)
+
             statusRow(
                 symbol: hasFaceProfile ? "faceid" : "face.dashed",
                 title: "Face + blink",
@@ -186,7 +210,7 @@ struct ProtectionSettingsView: View {
                             .font(.system(size: 20, weight: .medium, design: .monospaced))
                             .tracking(-0.6)
                             .foregroundStyle(DesignSystem.primaryText)
-                        Text("Each selected app relocks after you switch to another app.")
+                        Text(settings.relockTiming.detail)
                             .font(.system(size: 10, weight: .regular, design: .monospaced))
                             .foregroundStyle(DesignSystem.secondaryText)
                     }
@@ -283,6 +307,16 @@ struct ProtectionSettingsView: View {
         Binding(
             get: { launchAtLogin.isEnabled },
             set: { launchAtLogin.setEnabled($0) }
+        )
+    }
+
+    private var relockTimingBinding: Binding<AppRelockTiming> {
+        Binding(
+            get: { settings.relockTiming },
+            set: { timing in
+                settings.relockTiming = timing
+                onConfigurationChanged()
+            }
         )
     }
 

@@ -8,10 +8,12 @@ final class ApplicationProtectionController: NSObject {
     private let store: FaceProfileStore
     private let featurePrintService: FeaturePrintService
     private var gateWindow: ProtectionWindow?
-    private weak var gatedApplication: NSRunningApplication?
+    private var gatedApplication: NSRunningApplication?
     private var gatedBundleIdentifier: String?
-    private var authorizedBundleIdentifier: String?
-    private var lastExternalBundleIdentifier: String?
+    private var gatedProcessIdentifier: Int32?
+    private var authorizations = AppAuthorizationSessions()
+    private var lastAccessibleApplication: NSRunningApplication?
+    private var applicationToReturnTo: NSRunningApplication?
     private var isReturningToAuthenticatedApplication = false
     private var pendingGlanceAuthorizationReset = false
     private var isMonitoring = false
@@ -38,6 +40,12 @@ final class ApplicationProtectionController: NSObject {
             name: NSWorkspace.didActivateApplicationNotification,
             object: nil
         )
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(applicationDidTerminate(_:)),
+            name: NSWorkspace.didTerminateApplicationNotification,
+            object: nil
+        )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(applicationWillTerminate(_:)),
@@ -51,14 +59,16 @@ final class ApplicationProtectionController: NSObject {
         isMonitoring = false
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         NotificationCenter.default.removeObserver(self)
+        clearAuthorization()
         dismissGate(restoreApplication: true)
     }
 
     func configurationDidChange() {
-        guard let bundleIdentifier = gatedBundleIdentifier else { return }
-        if !settings.isEnabled || !settings.isProtected(bundleIdentifier) {
+        if let bundleIdentifier = gatedBundleIdentifier,
+           !settings.isEnabled || !settings.isProtected(bundleIdentifier) {
             dismissGate(restoreApplication: true)
         }
+        relockAuthorizedApplicationIfNeeded(for: NSWorkspace.shared.frontmostApplication)
     }
 
     @objc private func applicationDidActivate(_ notification: Notification) {
@@ -77,31 +87,27 @@ final class ApplicationProtectionController: NSObject {
         }
         guard application.activationPolicy == .regular else { return }
 
-        // If Glance genuinely became active between two visits to an app,
-        // revoke the previous visit before evaluating the new activation.
-        if pendingGlanceAuthorizationReset {
-            pendingGlanceAuthorizationReset = false
-            authorizedBundleIdentifier = nil
-            lastExternalBundleIdentifier = nil
+        pendingGlanceAuthorizationReset = false
+
+        // The shield belongs only to its target app. Let Command-Tab, the Dock,
+        // and other app activations leave the gate without granting access.
+        if let gatedProcessIdentifier, gatedProcessIdentifier != application.processIdentifier {
+            leaveGate(activatePreviousApplication: false)
         }
 
         if isReturningToAuthenticatedApplication {
-            if bundleIdentifier == authorizedBundleIdentifier {
-                lastExternalBundleIdentifier = bundleIdentifier
-                isReturningToAuthenticatedApplication = false
-                return
-            }
             isReturningToAuthenticatedApplication = false
         }
 
-        if lastExternalBundleIdentifier != bundleIdentifier {
-            authorizedBundleIdentifier = nil
-            lastExternalBundleIdentifier = bundleIdentifier
+        relockAuthorizedApplicationIfNeeded(for: application)
+
+        if !settings.isEnabled || !settings.isProtected(bundleIdentifier) || isAuthorized(application) {
+            lastAccessibleApplication = application
         }
 
         guard settings.isEnabled,
               settings.isProtected(bundleIdentifier),
-              authorizedBundleIdentifier != bundleIdentifier,
+              !isAuthorized(application),
               camera.frameHandler == nil,
               gateWindow == nil else { return }
 
@@ -109,12 +115,32 @@ final class ApplicationProtectionController: NSObject {
     }
 
     @objc private func applicationWillTerminate(_ notification: Notification) {
+        clearAuthorization()
         dismissGate(restoreApplication: true)
+    }
+
+    @objc private func applicationDidTerminate(_ notification: Notification) {
+        guard let application = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
+            return
+        }
+
+        authorizations.didTerminate(processIdentifier: application.processIdentifier)
+
+        if let gatedProcessIdentifier,
+           application.processIdentifier == gatedProcessIdentifier {
+            dismissGate(restoreApplication: false)
+        }
     }
 
     private func presentGate(for application: NSRunningApplication, bundleIdentifier: String) {
         gatedApplication = application
         gatedBundleIdentifier = bundleIdentifier
+        gatedProcessIdentifier = application.processIdentifier
+        applicationToReturnTo = lastAccessibleApplication
+        let identity = ApplicationIdentity(
+            bundleIdentifier: bundleIdentifier,
+            processIdentifier: application.processIdentifier
+        )
 
         let appName = application.localizedName ?? "Protected app"
         let appIcon = application.icon ?? NSWorkspace.shared.icon(forFile: application.bundleURL?.path ?? "")
@@ -127,7 +153,11 @@ final class ApplicationProtectionController: NSObject {
             camera: camera,
             store: store,
             featurePrintService: featurePrintService,
-            onAuthenticated: { [weak self] in self?.authenticationSucceeded() }
+            onAuthenticated: { [weak self] in self?.authenticationSucceeded(for: identity) },
+            onLeave: { [weak self] in
+                guard self?.gatedProcessIdentifier == identity.processIdentifier else { return }
+                self?.leaveGate()
+            }
         )
 
         let window = ProtectionWindow(
@@ -147,6 +177,7 @@ final class ApplicationProtectionController: NSObject {
         window.isFloatingPanel = true
         window.becomesKeyOnlyIfNeeded = false
         window.setFrame(frame, display: true)
+        window.onLeave = { [weak self] in self?.leaveGate() }
         // A non-activating panel accepts interaction without making Glance the
         // foreground app. The protected app stays active behind this opaque
         // overlay, so unlocking requires no fragile cross-app focus reversal.
@@ -154,12 +185,13 @@ final class ApplicationProtectionController: NSObject {
         window.makeKeyAndOrderFront(nil)
     }
 
-    private func authenticationSucceeded() {
-        guard let bundleIdentifier = gatedBundleIdentifier else {
-            dismissGate(restoreApplication: false)
-            return
-        }
-        authorizedBundleIdentifier = bundleIdentifier
+    private func authenticationSucceeded(for identity: ApplicationIdentity) {
+        // A cancelled macOS authentication request can complete after another
+        // gate opens. It must not authenticate the new target.
+        guard gatedBundleIdentifier == identity.bundleIdentifier,
+              gatedProcessIdentifier == identity.processIdentifier else { return }
+        authorizations.authorize(identity)
+        lastAccessibleApplication = gatedApplication
         isReturningToAuthenticatedApplication = true
         dismissGate(restoreApplication: true)
     }
@@ -176,9 +208,41 @@ final class ApplicationProtectionController: NSObject {
                   self.gateWindow == nil,
                   !self.isReturningToAuthenticatedApplication else { return }
 
-            self.authorizedBundleIdentifier = nil
-            self.lastExternalBundleIdentifier = nil
+            self.relockAuthorizedApplicationIfNeeded(for: NSWorkspace.shared.frontmostApplication)
         }
+    }
+
+    private func isAuthorized(_ application: NSRunningApplication) -> Bool {
+        guard let identity = identity(of: application) else { return false }
+        return authorizations.isAuthorized(identity)
+    }
+
+    private func relockAuthorizedApplicationIfNeeded(for activeApplication: NSRunningApplication?) {
+        authorizations.didActivate(activeApplication.flatMap(identity(of:)), timing: settings.relockTiming)
+    }
+
+    private func identity(of application: NSRunningApplication) -> ApplicationIdentity? {
+        guard let bundleIdentifier = application.bundleIdentifier else { return nil }
+        return ApplicationIdentity(bundleIdentifier: bundleIdentifier, processIdentifier: application.processIdentifier)
+    }
+
+    private func clearAuthorization() {
+        authorizations.removeAll()
+    }
+
+    private func leaveGate(activatePreviousApplication: Bool = true) {
+        guard gateWindow != nil else { return }
+        let previousApplication = applicationToReturnTo
+        // Leaving the shield must not reveal the unauthenticated app beneath it.
+        _ = gatedApplication?.hide()
+        isReturningToAuthenticatedApplication = false
+        dismissGate(restoreApplication: false)
+
+        guard activatePreviousApplication else { return }
+        let destination = previousApplication.flatMap { $0.isTerminated ? nil : $0 }
+            ?? NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == "com.apple.finder" }
+        _ = destination?.unhide()
+        _ = destination?.activate(options: [.activateAllWindows])
     }
 
     private func dismissGate(restoreApplication: Bool) {
@@ -188,6 +252,8 @@ final class ApplicationProtectionController: NSObject {
         gateWindow = nil
         gatedApplication = nil
         gatedBundleIdentifier = nil
+        gatedProcessIdentifier = nil
+        applicationToReturnTo = nil
         camera.frameHandler = nil
         camera.stop()
 
@@ -205,54 +271,10 @@ final class ApplicationProtectionController: NSObject {
             isReturningToAuthenticatedApplication = false
             return
         }
-        handOffFocus(to: application)
-    }
-
-    private func handOffFocus(to application: NSRunningApplication, attempt: Int = 0) {
-        guard !application.isTerminated else {
-            isReturningToAuthenticatedApplication = false
-            return
-        }
-
+        // One focus handoff is sufficient; queued retries could pull focus back
+        // after the user has chosen to switch to a different app.
         _ = application.unhide()
-
-        let delay = attempt == 0 ? 0.06 : 0.12
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self, weak application] in
-            guard let self, let application, !application.isTerminated else {
-                self?.isReturningToAuthenticatedApplication = false
-                return
-            }
-
-            if NSWorkspace.shared.frontmostApplication?.processIdentifier == application.processIdentifier {
-                return
-            }
-
-            _ = application.unhide()
-            _ = application.activate(options: [.activateAllWindows])
-
-            if attempt < 3 {
-                self.handOffFocus(to: application, attempt: attempt + 1)
-            } else {
-                self.openApplicationAsActivationFallback(application)
-            }
-        }
-    }
-
-    private func openApplicationAsActivationFallback(_ application: NSRunningApplication) {
-        guard let bundleURL = application.bundleURL else {
-            isReturningToAuthenticatedApplication = false
-            return
-        }
-
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = true
-        configuration.addsToRecentItems = false
-        configuration.createsNewApplicationInstance = false
-        NSWorkspace.shared.openApplication(
-            at: bundleURL,
-            configuration: configuration,
-            completionHandler: nil
-        )
+        _ = application.activate(options: [.activateAllWindows])
     }
 
     private func screenUnderPointer() -> NSScreen? {
@@ -262,11 +284,10 @@ final class ApplicationProtectionController: NSObject {
 }
 
 private final class ProtectionWindow: NSPanel {
+    var onLeave: (() -> Void)?
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
-    // The gate may only be closed by its controller after authentication or
-    // an explicit protection configuration/lifecycle change.
-    override func cancelOperation(_ sender: Any?) {}
-    override func performClose(_ sender: Any?) {}
+    override func cancelOperation(_ sender: Any?) { onLeave?() }
+    override func performClose(_ sender: Any?) { onLeave?() }
 }

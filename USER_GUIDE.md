@@ -34,13 +34,18 @@ The app stores only derived Vision feature representations in this Mac’s Keych
 1. From the home screen, select **Manage Protected Apps**.
 2. Turn on **Protection active**.
 3. Enable the switch beside each application you want Glance to cover.
-4. Optionally enable **Launch at Login**. If macOS requests approval, use **Open Login Items Settings** and allow Glance under System Settings → General → Login Items.
-5. Close the main window if desired. Do not choose **Quit Glance** from the menu-bar control; closing the window keeps protection running, while quitting disables it.
-6. Switch to a selected app.
-7. Glance covers the selected app while it checks your face. Follow the notch instructions and blink when requested.
-8. After a successful match, the gate disappears. Switching to a different app relocks it.
+4. Choose a **Relock timing**: **Immediately**, **After 30 seconds**, or **When the app quits**.
+5. Optionally enable **Launch at Login**. If macOS requests approval, use **Open Login Items Settings** and allow Glance under System Settings → General → Login Items.
+6. Close the main window if desired. Do not choose **Quit Glance** from the menu-bar control; closing the window keeps protection running, while quitting disables it.
+7. Switch to a selected app.
+8. Glance covers the selected app while it checks your face. Follow the notch instructions and blink when requested.
+9. After a successful match, the gate disappears. The app relocks according to the timing you selected.
 
-At every gate, **Use Touch ID or Password** invokes the standard macOS device-owner authentication dialog. Depending on the Mac and its configuration, macOS can use Touch ID, Apple Watch, or the account password. The gate has no cancel/back action and cannot be dismissed with Escape or Close Window. Cancelling the macOS dialog returns to the still-locked gate and resumes face verification.
+**When the app quits** keeps each verified app unlocked until its process exits (for example, with Command-Q). Switching focus, hiding an app, or closing a window while the app keeps running does not relock it. Relaunching the app requires verification again.
+
+You can leave an unlock screen with **Back to other apps**, Escape, or Command-Tab. Glance hides the unauthenticated app and keeps it locked; returning to it shows the gate again.
+
+At every gate, **Use Touch ID or Password** invokes the standard macOS device-owner authentication dialog. Depending on the Mac and its configuration, macOS can use Touch ID, Apple Watch, or the account password. Cancelling the macOS dialog returns to the still-locked gate and resumes face verification.
 
 This feature works only while Glance is running. It is a privacy convenience, not a tamper-resistant lock: quitting Glance or otherwise bypassing cooperative app hiding disables the protection.
 
@@ -80,5 +85,5 @@ Even if these checks work, replayed video, high-quality displays, and sophistica
 | “Not recognized” | Re-enrol with varied samples. In a debug build, review the conservative developer threshold. |
 | A protected app did not prompt | Confirm **Protection active** is enabled, the app’s switch is on, and Glance is still running. Switch to another app and back again. |
 | You do not want to use face recognition | Choose **Use Touch ID or Password** in the app gate. The dialog is controlled by macOS. |
-| The app gate remains visible | Complete face-and-blink verification or choose **Use Touch ID or Password**. Cancelling macOS authentication does not dismiss the gate. |
+| The app gate remains visible | Complete verification, choose **Use Touch ID or Password**, or select **Back to other apps** to leave this app locked. |
 | Face Check is still visible | Choose **Exit safe lock**; closing the app also exits the simulation. |
