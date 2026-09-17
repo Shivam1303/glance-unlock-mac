@@ -6,6 +6,7 @@ struct AppUnlockGateView: View {
     let applicationName: String
     let applicationIcon: NSImage
     let onAuthenticated: @MainActor () -> Void
+    let onLeave: @MainActor () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var viewModel: UnlockViewModel
@@ -20,11 +21,13 @@ struct AppUnlockGateView: View {
         camera: CameraService,
         store: FaceProfileStore,
         featurePrintService: FeaturePrintService,
-        onAuthenticated: @escaping @MainActor () -> Void
+        onAuthenticated: @escaping @MainActor () -> Void,
+        onLeave: @escaping @MainActor () -> Void
     ) {
         self.applicationName = applicationName
         self.applicationIcon = applicationIcon
         self.onAuthenticated = onAuthenticated
+        self.onLeave = onLeave
         _viewModel = StateObject(
             wrappedValue: UnlockViewModel(
                 camera: camera,
@@ -42,6 +45,12 @@ struct AppUnlockGateView: View {
                 HStack {
                     AppMark(compact: true).opacity(0.72)
                     Spacer()
+                    Button(action: leaveApp) {
+                        Label("Back to other apps", systemImage: "arrow.left")
+                    }
+                    .buttonStyle(GlanceSecondaryButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityHint("Keeps this app locked and returns to your previous app")
                 }
                 .padding(.horizontal, 28)
                 .padding(.top, 18)
@@ -139,6 +148,7 @@ struct AppUnlockGateView: View {
             finishAuthentication()
         }
         .onDisappear {
+            didComplete = true
             authenticationContext?.invalidate()
             viewModel.stop()
         }
@@ -245,10 +255,12 @@ struct AppUnlockGateView: View {
                     .deviceOwnerAuthentication,
                     localizedReason: "Open \(applicationName)"
                 )
+                guard !didComplete else { return }
                 authenticationContext = nil
                 isUsingSystemAuthentication = false
                 finishAuthentication()
             } catch let error as LAError {
+                guard !didComplete else { return }
                 authenticationContext = nil
                 isUsingSystemAuthentication = false
                 if error.code != .userCancel && error.code != .systemCancel && error.code != .appCancel {
@@ -256,6 +268,7 @@ struct AppUnlockGateView: View {
                 }
                 viewModel.start()
             } catch {
+                guard !didComplete else { return }
                 authenticationContext = nil
                 isUsingSystemAuthentication = false
                 systemAuthenticationError = error.localizedDescription
@@ -270,5 +283,13 @@ struct AppUnlockGateView: View {
         authenticationContext?.invalidate()
         viewModel.stop()
         onAuthenticated()
+    }
+
+    private func leaveApp() {
+        guard !didComplete else { return }
+        didComplete = true
+        authenticationContext?.invalidate()
+        viewModel.stop()
+        onLeave()
     }
 }
