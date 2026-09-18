@@ -70,6 +70,51 @@ final class MainWindowPresenterTests: XCTestCase {
         XCTAssertTrue(window.isVisible)
     }
 
+    func testFocusRequestSurvivesAsynchronousActivation() async {
+        var active = false
+        var activationRequests = 0
+        let presenter = MainWindowPresenter(
+            isApplicationActive: { active },
+            activateApplication: { activationRequests += 1 }
+        )
+        let window = makeWindow()
+        defer { window.close() }
+        presenter.register(window)
+        await drainMainQueue()
+        presenter.show {}
+        await drainMainQueue()
+        XCTAssertEqual(activationRequests, 1)
+        window.orderOut(nil)
+
+        active = true
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApplication.shared)
+        XCTAssertTrue(window.isVisible)
+
+        // Once fulfilled, later activations must not reopen a dismissed window.
+        window.orderOut(nil)
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApplication.shared)
+        XCTAssertFalse(window.isVisible)
+    }
+
+    func testClosingWindowCancelsPendingActivationFocus() async {
+        var active = false
+        let presenter = MainWindowPresenter(
+            isApplicationActive: { active },
+            activateApplication: {}
+        )
+        let window = makeWindow()
+        defer { window.close() }
+        presenter.register(window)
+        await drainMainQueue()
+        presenter.show {}
+        await drainMainQueue()
+        window.close()
+
+        active = true
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApplication.shared)
+        XCTAssertFalse(window.isVisible)
+    }
+
     private func makeWindow() -> NSWindow {
         let window = NSWindow(
             contentRect: NSRect(x: 100, y: 100, width: 320, height: 200),
