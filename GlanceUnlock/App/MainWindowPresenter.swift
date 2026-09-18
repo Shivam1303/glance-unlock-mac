@@ -7,6 +7,28 @@ final class MainWindowPresenter {
     private weak var window: NSWindow?
     private var windowCloseObserver: AnyCancellable?
     private var presentationRequested = false
+    private var activationObserver: AnyCancellable?
+    private let isApplicationActive: @MainActor () -> Bool
+    private let activateApplication: @MainActor () -> Void
+
+    init(
+        isApplicationActive: @escaping @MainActor () -> Bool = { NSApplication.shared.isActive },
+        activateApplication: @escaping @MainActor () -> Void = {
+            // This is an explicit menu action: bring Glance forward even when
+            // another app owns the foreground.
+            NSApplication.shared.activate(ignoringOtherApps: true)
+        }
+    ) {
+        self.isApplicationActive = isApplicationActive
+        self.activateApplication = activateApplication
+        activationObserver = NotificationCenter.default
+            .publisher(for: NSApplication.didBecomeActiveNotification, object: NSApplication.shared)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.finishPresentationIfActive()
+                }
+            }
+    }
 
     func show(openScene: @escaping @MainActor () -> Void) {
         // Wait until the menu finishes tracking before opening and activating
@@ -30,6 +52,7 @@ final class MainWindowPresenter {
                     MainActor.assumeIsolated {
                         self?.window = nil
                         self?.windowCloseObserver = nil
+                        self?.presentationRequested = false
                     }
                 }
         }
@@ -40,16 +63,28 @@ final class MainWindowPresenter {
 
     private func presentIfRequested() {
         guard presentationRequested, let window else { return }
-        presentationRequested = false
-
         if window.isMiniaturized {
             window.deminiaturize(nil)
         }
         NSApplication.shared.unhide(nil)
-        NSApplication.shared.activate()
+        // A window on another Space should follow this explicit menu request.
+        let originalBehavior = window.collectionBehavior
+        window.collectionBehavior = originalBehavior.union(.moveToActiveSpace).subtracting(.canJoinAllSpaces)
         window.makeKeyAndOrderFront(nil)
-        // Menu-bar-only apps can otherwise order beneath the foreground app.
         window.orderFrontRegardless()
+        window.collectionBehavior = originalBehavior
+        activateApplication()
+        finishPresentationIfActive()
+    }
+
+    private func finishPresentationIfActive() {
+        guard presentationRequested, isApplicationActive(), let window else { return }
+        // Activation is asynchronous. Focus again after it completes, and keep
+        // an existing settings/enrollment sheet as the keyboard destination.
+        presentationRequested = false
+        let destination = window.attachedSheet ?? window
+        destination.makeKeyAndOrderFront(nil)
+        destination.orderFrontRegardless()
     }
 }
 
